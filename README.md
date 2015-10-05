@@ -1,7 +1,7 @@
-## TalkFusion Socket Client
+## AngularJS SocketCluster Client
 
-This module provides a socket wrapper using the socket cluster client to interface
-with the TalkFusion socket server.
+This module provides a socket wrapper using the socket cluster client 
+to interface with a socket server.
 
 ###### Dependencies
 
@@ -10,22 +10,22 @@ with the TalkFusion socket server.
 
 ###### Documentation
 
-* [API](https://github.com/TalkFusionDev/TalkFusion-Socket-Client/edit/master/API.md)
-* [Example Usage](https://github.com/TalkFusionDev/TalkFusion-Socket-Client/edit/master/example.html)
-* [License](https://github.com/TalkFusionDev/TalkFusion-Socket-Client/edit/master/LICENSE)
-* [Issue Tracking](https://github.com/TalkFusionDev/TalkFusion-Socket-Client/issues)
+* [API](https://github.com/ryanpager/angularjs-socket-cluster/edit/master/API.md)
+* [Example Usage](https://github.com/ryanpager/angularjs-socket-cluster/edit/master/example.html)
+* [License](https://github.com/ryanpager/angularjs-socket-cluster/edit/master/LICENSE)
+* [Issue Tracking](https://github.com/ryanpager/angularjs-socket-cluster/issues)
 
 ###### Installation
 
 ```
-bower install talkfusion-socket-client
+bower install angularjs-socket-cluster
 ```
 
 ###### Building
 
 ```
 # checkout the repository
-git clone git@github.com:TalkFusionDev/TalkFusion-Socket-Client.git <folder>
+git clone git@github.com:ryanpager/angularjs-socket-cluster.git <folder>
 
 # install npm dependencies
 npm install

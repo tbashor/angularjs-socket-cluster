@@ -1,5 +1,5 @@
 {
-  "name": "angularjs-socketCluster",
+  "name": "angularjs-socket-cluster",
   "version": "1.0.0",
   "description": "AngularJS SocketCluster Interface",
   "scripts": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ryanpager/angularjs-socketCluster.git"
+    "url": "git+https://github.com/ryanpager/angularjs-socket-cluster.git"
   },
   "keywords": [
     "socket-cluster",
@@ -17,9 +17,9 @@
   "author": "Ryan Page <ryanpager@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ryanpager/angularjs-socketCluster/issues"
+    "url": "https://github.com/ryanpager/angularjs-socket-cluster/issues"
   },
-  "homepage": "https://github.com/ryanpager/angularjs-socketCluster#readme",
+  "homepage": "https://github.com/ryanpager/angularjs-socket-cluster#readme",
   "dependencies": {
     "coffeelint-use-strict": "0.0.1",
     "gulp": "^3.5.6",

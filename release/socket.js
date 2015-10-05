@@ -2165,7 +2165,7 @@ module.exports={
  * AngularJS SocketCluster Interface
  * @author Ryan Page <ryanpager@gmail.com>
  * @version v1.0.0
- * @see https://github.com/ryanpager/angularjs-socketCluster#readme
+ * @see https://github.com/ryanpager/angularjs-socket-cluster#readme
  * @license MIT
  */
 (function() { 'use strict'; 

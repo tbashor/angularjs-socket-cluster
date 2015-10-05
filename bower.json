@@ -1,7 +1,7 @@
 {
-  "name": "angularjs-socketCluster",
+  "name": "angularjs-socket-cluster",
   "version": "1,0.0",
-  "homepage": "https://github.com/ryanpager/angularjs-socketCluster",
+  "homepage": "https://github.com/ryanpager/angularjs-socket-cluster",
   "authors": [
     "Ryan Page <ryanpager@gmail.com>"
   ],

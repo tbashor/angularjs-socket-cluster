@@ -1,5 +1,5 @@
-# @author    Ryan Page <ryan.page@talkfusion.com>
-# @see       https://github.com/ryanpager/angularjs-socketCluster
+# @author    Ryan Page <ryanpager@gmail.com>
+# @see       https://github.com/ryanpager/angularjs-socket-cluster
 # @version   1.0.0
 
 ###
