@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- generic unused meta -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+
+    <!-- application title -->
+    <title>AngularJS SocketCluster Client Example</title>
+  </head>
+  <body ng-app="example.app">
+    <p>Open Console To View Output</p>
+
+    <!-- example js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.0/angular.js"></script>
+    <script src="./release/socket.js"></script>
+    <script type="text/javascript">
+      /**
+       * @description
+       * Example app module declaration.
+       */
+      angular
+        .module('example.app', [
+          'sbb.components'
+        ])
+        .run([
+          'sbb.components.socket',
+          Bootstrap
+        ])
+
+      /**
+       * @name Bootstrap
+       * @description
+       * This function will bootstrap the application as needed.
+       * @param {sbb.components.socket} SocketInterface
+       */
+      function Bootstrap(SocketInterface) {
+        // Enable Socket Debugging
+        SocketInterface.toggleDebugging(true);
+
+        // Connect to the socket
+        SocketInterface.connect();
+
+        // Join a random channel
+        channel = 'talkfusion-socketclient-test';
+        SocketInterface.subscribe(channel);
+
+        // Publish some data to the socket
+        $event = {
+          $applications: [],
+          $event: 'ping-pong',
+          $user: {
+            name: 'Tester'
+          },
+          data: {
+            message: 'This is a ping message'
+          }
+        };
+
+        SocketInterface.publish(channel, $event);
+      }
+    </script>
+  </body>
+</html>

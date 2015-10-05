@@ -1,0 +1,26 @@
+{
+  "name": "angularjs-socketCluster",
+  "version": "1,0.0",
+  "homepage": "https://github.com/ryanpager/angularjs-socketCluster",
+  "authors": [
+    "Ryan Page <ryanpager@gmail.com>"
+  ],
+  "description": "AngularJS SocketCluster Client",
+  "main": "release/socket.js",
+  "keywords": [
+    "socket-cluster",
+    "socket",
+    "angularjs"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "socketcluster-client": "~2.3.7"
+  }
+}
