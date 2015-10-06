@@ -10,9 +10,9 @@ to interface with a socket server.
 
 ###### Documentation
 
-* [API](https://github.com/ryanpager/angularjs-socket-cluster/edit/master/API.md)
-* [Example Usage](https://github.com/ryanpager/angularjs-socket-cluster/edit/master/example.html)
-* [License](https://github.com/ryanpager/angularjs-socket-cluster/edit/master/LICENSE)
+* [API](https://github.com/ryanpager/angularjs-socket-cluster/blob/master/API.md)
+* [Example Usage](https://github.com/ryanpager/angularjs-socket-cluster/blob/master/example.html)
+* [License](https://github.com/ryanpager/angularjs-socket-cluster/blob/master/LICENSE)
 * [Issue Tracking](https://github.com/ryanpager/angularjs-socket-cluster/issues)
 
 ###### Installation
