@@ -1,6 +1,5 @@
 # @author    Ryan Page <ryanpager@gmail.com>
 # @see       https://github.com/ryanpager/angularjs-socket-cluster
-# @version   1.0.0
 
 ###
 >> Class Declaration
@@ -37,165 +36,222 @@ class Socket
   # This is a magic method which will allow the service to be returned while
   #  injected with the correct configuration variables.
   # @return {object}
-  $get: ['socketCluster', '$rootScope', '$log', '$timeout', (socketCluster, $rootScope, $log, $timeout) ->
-    return service =
-      # @name toggleDebugging
-      # @type {function}
-      # @description
-      # Toggle the debugging state for the socket connection.
-      # @param {boolean} enabled
-      toggleDebugging: (enabled = false) ->
-        debuggingEnabled = enabled
+  $get: [
+    'socketCluster'
+    '$q'
+    '$rootScope'
+    '$log'
+    '$timeout'
+    (socketCluster, $q, $rootScope, $log, $timeout) ->
+      return service =
+        # @name connect
+        # @type {function}
+        # @description
+        # This function will connect a socket server given the explicit default
+        #  connection options and the overriden connection options supplied.
+        # @param {object} opts
+        # @return {Promise.<object>}
+        connect: (opts = {}) ->
+          return $q (resolve, reject) ->
+            # Merge in options with the defaults
+            angular.merge connectionOptions, opts
 
-      # @name connect
-      # @type {function}
-      # @description
-      # This function will connect a socket server given the explicit default
-      #  connection options and the overriden connection options supplied.
-      # @param {object} opts
-      connect: (opts = {}) ->
-        # Merge in options with the defaults
-        angular.merge connectionOptions, opts
-
-        if debuggingEnabled
-          $log.info('Socket :: Attempting connection...')
-
-        # Create the connection
-        instance = socketCluster.connect connectionOptions
-
-        # Bind the socket events
-        instance.on 'error', (err) ->
-          $log.error("Socket :: Error >> #{err}")
-
-        instance.on 'connectAbort', (err) ->
-          $log.error("Socket :: Connection aborted >> #{err}")
-
-        instance.on 'connect', ->
-          if debuggingEnabled
-            $log.info('Socket :: Connection successful!')
-
-        instance.on 'subscribeFail', (err) ->
-          $log.error("Socket :: Failed channel subscription >> #{err}")
-
-      # @name subscribe
-      # @type {function}
-      # @description
-      # This function will subscribe to a specific channel on the socket server
-      #  so that events can be broadcasted down the scope.
-      # @param {string} channel
-      subscribe: (channel = null) ->
-        # Make sure that we have a channel provided before we subscribe
-        #  to any events that are going on.
-        unless channel?
-          $log.error('Socket :: Error >> no socket channel specified.')
-          return
-
-        # Make sure we have a socket connection
-        unless instance?
-          $log.error('Socket :: Error >> no socket connection established.')
-          return
-
-        # Debugging
-        if debuggingEnabled
-          $log.info("Socket :: Subscribe to channel #{channel}")
-
-        # Subscribe to the channel and bind the event watcher so that we can
-        #  rebroadcast any information coming through the channel
-        instance.subscribe channel
-        instance.watch channel, (eventData) ->
-          # Error handling
-          if eventData.$error?
             if debuggingEnabled
-              $log.error("Socket :: Event error >> #{JSON.stringify(eventData)}")
+              $log.info('Socket :: Attempting connection...')
+
+            # Create the connection
+            instance = socketCluster.connect connectionOptions
+
+            # Generic events to listen for
+            instance.on 'error', (err) ->
+              $log.error("Socket :: Error >> #{err}")
+
+            instance.on 'subscribeFail', (err) ->
+              $log.error("Socket :: Channel subscription error >> #{err}")
+
+            instance.on 'disconnect', (err) ->
+              if debuggingEnabled
+                $log.info('Socket :: Disconnection successful')
+
+            # Failed connection events
+            instance.on 'connectAbort', (err) ->
+              err = "Socket :: Connection aborted >> #{err}"
+              $log.error(err)
+              reject(err)
+
+            # Successful connection events
+            instance.on 'connect', ->
+              if debuggingEnabled
+                $log.info('Socket :: Connection successful')
+              resolve(true)
+
+        # @name disconnect
+        # @type {function}
+        # @description
+        # This function will disconnect the socket from the server so that
+        #  no more events or watchers are bound and emitted.
+        # @return {Promise.<object>}
+        disconnect: ->
+          return $q (resolve, reject) ->
+            if debuggingEnabled
+              $log.info('Socket :: Attempting disconnect...')
+
+            # Make sure we have a socket connection
+            unless instance?
+              err = 'Socket :: Error >> no socket connection established.'
+              $log.error(err)
+              reject(err)
+
+            instance.disconnect()
+            resolve(true)
+
+        # @name subscribe
+        # @type {function}
+        # @description
+        # This function will subscribe to a specific channel on the socket server
+        #  so that events can be broadcasted down the scope.
+        # @param {string} channel
+        # @return {Promise.<object>}
+        subscribe: (channel = null) ->
+          return $q (resolve, reject) ->
+            # Make sure that we have a channel provided before we subscribe
+            #  to any events that are going on.
+            unless channel?
+              err = 'Socket :: Error >> no socket channel specified.'
+              $log.error(err)
+              reject(err)
+
+            # Make sure we have a socket connection
+            unless instance?
+              err = 'Socket :: Error >> no socket connection established.'
+              $log.error(err)
+              reject(err)
+
+            # Debugging
+            if debuggingEnabled
+              $log.info("Socket :: Subscribe to channel #{channel}")
+
+            # Subscribe to the channel and bind the event watcher so that we can
+            #  rebroadcast any information coming through the channel
+            instance.watch channel, (eventData) ->
+              # Error handling
+              if eventData.$error?
+                if debuggingEnabled
+                  $log.error('Socket :: Event error >>', eventData)
+                return
+
+              # Debugging
+              if debuggingEnabled
+                $log.info('Socket :: Event received >>', eventData)
+
+              $rootScope.$apply ->
+                if debuggingEnabled
+                  $log.info("Socket :: Rebroadcast event >> #{eventData.$event}")
+
+                $rootScope.$broadcast "socket:#{eventData.$event}", eventData
+
+
+            instance.subscribe channel
+
+
+            resolve(true)
+
+        # @name unsubscribe
+        # @type {function}
+        # @description
+        # This function will unsubscribe to a specific channel on the socket server
+        #  so that no more channel events are broadcasted.
+        # @param {string} channel
+        # @return {Promise.<object>}
+        unsubscribe: (channel = null) ->
+          return $q (resolve, reject) ->
+            # Make sure that we have a channel provided before we unsubscribe
+            #  to any events that are going on.
+            unless channel?
+              err = 'Socket :: Error >> no socket channel specified.'
+              $log.error(err)
+              reject(err)
+
+            # Make sure we have a socket connection
+            unless instance?
+              err = 'Socket :: Error >> no socket connection established.'
+              $log.error(err)
+              reject(err)
+
+            # Debugging
+            if debuggingEnabled
+              $log.info("Socket :: Unsubscribe to channel #{channel}")
+
+            instance.unsubscribe channel
+            instance.unwatch channel
+
+            resolve(true)
+
+        # @name public
+        # @type {function}
+        # @description
+        # This function will publish data to a specific channel so that all
+        #  subscribers get notified of its information.
+        # @param {string} channel
+        # @param {object} eventdata
+        # @return {Promise.<object>}
+        publish: (channel = null, eventData = {}) ->
+          return $q (resolve, reject) ->
+            # Make sure that we have a channel provided before we publish
+            #  to any channel specified.
+            unless channel?
+              err = 'Socket :: Error >> no socket channel specified.'
+              $log.error(err)
+              reject(err)
+
+            # Make sure we have a socket connection
+            unless instance?
+              err = 'Socket :: Error >> no socket connection established.'
+              $log.error(err)
+              reject(err)
+
+            # Debugging
+            if debuggingEnabled
+              $log.info("Socket :: Publish to channel #{channel} >>", eventData)
+
+            instance.publish channel, eventData
+
+            resolve(true)
+
+        # @name toggleDebugging
+        # @type {function}
+        # @description
+        # Toggle the debugging state for the socket connection.
+        # @param {boolean} enabled
+        toggleDebugging: (enabled = false) ->
+          debuggingEnabled = enabled
+
+        # @name subscriptions
+        # @type {function}
+        # @description
+        # This function will return an array of active channel subscriptions
+        #  in array format.
+        subscriptions: ->
+          # Make sure we have a socket connection
+          unless instance?
+            $log.error('Socket :: Error >> no socket connection established.')
             return
 
-          # Debugging
-          if debuggingEnabled
-            $log.info("Socket :: Event received >> #{JSON.stringify(eventData)}")
+          return instance.subscriptions()
 
-          $timeout ->
-            $rootScope.$apply ->
-              if debuggingEnabled
-                $log.info("Socket :: Rebroadcast event >> #{eventData.$event}")
+        # @name isSubscribed
+        # @type {function}
+        # @description
+        # This function will return a boolean indicator as to whether or not this
+        #  socket instance is subscribed to the supplied channel name.
+        # @param {string} channel
+        isSubscribed: (channel) ->
+          # Make sure we have a socket connection
+          unless instance?
+            $log.error('Socket :: Error >> no socket connection established.')
+            return
 
-              $rootScope.$broadcast """socket:#{eventData.$event}""", eventData
-
-      # @name unsubscribe
-      # @type {function}
-      # @description
-      # This function will unsubscribe to a specific channel on the socket server
-      #  so that no more channel events are broadcasted.
-      # @param {string} channel
-      unsubscribe: (channel = null) ->
-        # Make sure that we have a channel provided before we subscribe
-        #  to any events that are going on.
-        unless channel?
-          $log.error('Socket :: Error >> no socket channel specified.')
-          return
-
-        # Make sure we have a socket connection
-        unless instance?
-          $log.error('Socket :: Error >> no socket connection established.')
-          return
-
-        # Debugging
-        if debuggingEnabled
-          $log.info("Socket :: Unsubscribe to channel #{channel}")
-
-        instance.unsubscribe channel
-        instance.unwatch channel
-
-      # @name subscriptions
-      # @type {function}
-      # @description
-      # This function will return an array of active channel subscriptions
-      #  in array format.
-      subscriptions: ->
-        # Make sure we have a socket connection
-        unless instance?
-          $log.error('Socket :: Error >> no socket connection established.')
-          return
-
-        return instance.subscriptions()
-
-      # @name isSubscribed
-      # @type {function}
-      # @description
-      # This function will return a boolean indicator as to whether or not this
-      #  socket instance is subscribed to the supplied channel name.
-      # @param {string} channel
-      isSubscribed: (channel) ->
-        # Make sure we have a socket connection
-        unless instance?
-          $log.error('Socket :: Error >> no socket connection established.')
-          return
-
-        return instance.isSubscribed(channel)
-
-      # @name public
-      # @type {function}
-      # @description
-      # This function will publish data to a specific channel so that all
-      #  subscribers get notified of its information.
-      # @param {string} channel
-      # @param {object} eventdata
-      publish: (channel = null, eventData = {}) ->
-        # Make sure that we have a channel provided before we subscribe
-        #  to any events that are going on.
-        unless channel?
-          $log.error('Socket :: Error >> no socket channel specified.')
-          return
-
-        # Make sure we have a socket connection
-        unless instance
-          $log.error('Socket :: Error >> no socket connection established.')
-          return
-
-        # Debugging
-        if debuggingEnabled
-          $log.info("Socket :: Event published to #{channel} >> #{JSON.stringify(eventData)}")
-
-        instance.publish channel, eventData
+          return instance.isSubscribed(channel)
   ]
 
 ###

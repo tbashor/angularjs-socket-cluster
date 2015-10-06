@@ -13,6 +13,11 @@ Connects to the socket server given the supplied options overrides. Inside
 of the provider, there are defaults set for connections so all options do not
 need to be set ahead of time.
 
+###### disconnect
+
+Disconnects the current socket connection instance from the server. All wathchers
+and other event bindings are unbound and destroyed so nothing else happens.
+
 ###### subscribe([string] channel)
 
 Subscribe and set up the watchers for a specific channel on the socket server.

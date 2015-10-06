@@ -24,6 +24,9 @@
           'sbb.components'
         ])
         .run([
+          '$rootScope',
+          '$log',
+          '$timeout',
           'sbb.components.socket',
           Bootstrap
         ])
@@ -32,32 +35,59 @@
        * @name Bootstrap
        * @description
        * This function will bootstrap the application as needed.
+       * @param {angular.$rootScope} $rootScope
+       * @param {angular.$log} $log
+       * @param {angular.$timeout} $timeout
        * @param {sbb.components.socket} SocketInterface
        */
-      function Bootstrap(SocketInterface) {
+      function Bootstrap($rootScope, $log, $timeout, SocketInterface) {
         // Enable Socket Debugging
         SocketInterface.toggleDebugging(true);
 
-        // Connect to the socket
-        SocketInterface.connect();
-
-        // Join a random channel
+        // Set a placeholder for the random channel
         channel = 'talkfusion-socketclient-test';
-        SocketInterface.subscribe(channel);
 
-        // Publish some data to the socket
-        $event = {
-          $applications: [],
-          $event: 'ping-pong',
-          $user: {
-            name: 'Tester'
-          },
-          data: {
-            message: 'This is a ping message'
-          }
-        };
+        // Connect to the socket
+        SocketInterface
+          .connect()
+          .then(function() {
+            
+            // Subscribe to the channel
+            SocketInterface
+              .subscribe(channel)
+              .then(function() {
 
-        SocketInterface.publish(channel, $event);
+                // Set up a listener for the dummy published event.
+                $rootScope.$on('socket:ping-pong', function(e, eventData) {
+                  // Do something here...
+                });
+
+                // Publish some data to the channel
+                SocketInterface
+                  .publish(channel, {
+                    $applications: [],
+                    $event: 'ping-pong',
+                    $user: {
+                      name: 'Tester'
+                    },
+                    data: {
+                      message: 'This is a ping message'
+                    }  
+                  })
+                  .then(function() {
+                    
+                    // Disconnect from the socket
+                    $timeout(function() {
+                      SocketInterface
+                        .disconnect()
+                        .then(function() {});
+                    }, 5000)
+                  })
+              })
+          })
+          .catch(function (err) {
+            console.log(err)
+          });
       }
     </script>
   </body>

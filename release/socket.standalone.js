@@ -1,7 +1,7 @@
 /**
  * AngularJS SocketCluster Interface
  * @author Ryan Page <ryanpager@gmail.com>
- * @version v1.0.0
+ * @version v1.1.0
  * @see https://github.com/ryanpager/angularjs-socket-cluster#readme
  * @license MIT
  */
@@ -30,66 +30,87 @@ Socket = (function() {
   };
 
   Socket.prototype.$get = [
-    'socketCluster', '$rootScope', '$log', '$timeout', function(socketCluster, $rootScope, $log, $timeout) {
+    'socketCluster', '$q', '$rootScope', '$log', '$timeout', function(socketCluster, $q, $rootScope, $log, $timeout) {
       var service;
       return service = {
-        toggleDebugging: function(enabled) {
-          if (enabled == null) {
-            enabled = false;
-          }
-          return debuggingEnabled = enabled;
-        },
         connect: function(opts) {
           if (opts == null) {
             opts = {};
           }
-          angular.merge(connectionOptions, opts);
-          if (debuggingEnabled) {
-            $log.info('Socket :: Attempting connection...');
-          }
-          instance = socketCluster.connect(connectionOptions);
-          instance.on('error', function(err) {
-            return $log.error("Socket :: Error >> " + err);
-          });
-          instance.on('connectAbort', function(err) {
-            return $log.error("Socket :: Connection aborted >> " + err);
-          });
-          instance.on('connect', function() {
+          return $q(function(resolve, reject) {
+            angular.merge(connectionOptions, opts);
             if (debuggingEnabled) {
-              return $log.info('Socket :: Connection successful!');
+              $log.info('Socket :: Attempting connection...');
             }
+            instance = socketCluster.connect(connectionOptions);
+            instance.on('error', function(err) {
+              return $log.error("Socket :: Error >> " + err);
+            });
+            instance.on('subscribeFail', function(err) {
+              return $log.error("Socket :: Channel subscription error >> " + err);
+            });
+            instance.on('disconnect', function(err) {
+              if (debuggingEnabled) {
+                return $log.info('Socket :: Disconnection successful');
+              }
+            });
+            instance.on('connectAbort', function(err) {
+              err = "Socket :: Connection aborted >> " + err;
+              $log.error(err);
+              return reject(err);
+            });
+            return instance.on('connect', function() {
+              if (debuggingEnabled) {
+                $log.info('Socket :: Connection successful');
+              }
+              return resolve(true);
+            });
           });
-          return instance.on('subscribeFail', function(err) {
-            return $log.error("Socket :: Failed channel subscription >> " + err);
+        },
+        disconnect: function() {
+          return $q(function(resolve, reject) {
+            var err;
+            if (debuggingEnabled) {
+              $log.info('Socket :: Attempting disconnect...');
+            }
+            if (instance == null) {
+              err = 'Socket :: Error >> no socket connection established.';
+              $log.error(err);
+              reject(err);
+            }
+            instance.disconnect();
+            return resolve(true);
           });
         },
         subscribe: function(channel) {
           if (channel == null) {
             channel = null;
           }
-          if (channel == null) {
-            $log.error('Socket :: Error >> no socket channel specified.');
-            return;
-          }
-          if (instance == null) {
-            $log.error('Socket :: Error >> no socket connection established.');
-            return;
-          }
-          if (debuggingEnabled) {
-            $log.info("Socket :: Subscribe to channel " + channel);
-          }
-          instance.subscribe(channel);
-          return instance.watch(channel, function(eventData) {
-            if (eventData.$error != null) {
-              if (debuggingEnabled) {
-                $log.error("Socket :: Event error >> " + (JSON.stringify(eventData)));
-              }
-              return;
+          return $q(function(resolve, reject) {
+            var err;
+            if (channel == null) {
+              err = 'Socket :: Error >> no socket channel specified.';
+              $log.error(err);
+              reject(err);
+            }
+            if (instance == null) {
+              err = 'Socket :: Error >> no socket connection established.';
+              $log.error(err);
+              reject(err);
             }
             if (debuggingEnabled) {
-              $log.info("Socket :: Event received >> " + (JSON.stringify(eventData)));
+              $log.info("Socket :: Subscribe to channel " + channel);
             }
-            return $timeout(function() {
+            instance.watch(channel, function(eventData) {
+              if (eventData.$error != null) {
+                if (debuggingEnabled) {
+                  $log.error('Socket :: Event error >>', eventData);
+                }
+                return;
+              }
+              if (debuggingEnabled) {
+                $log.info('Socket :: Event received >>', eventData);
+              }
               return $rootScope.$apply(function() {
                 if (debuggingEnabled) {
                   $log.info("Socket :: Rebroadcast event >> " + eventData.$event);
@@ -97,25 +118,65 @@ Socket = (function() {
                 return $rootScope.$broadcast("socket:" + eventData.$event, eventData);
               });
             });
+            instance.subscribe(channel);
+            return resolve(true);
           });
         },
         unsubscribe: function(channel) {
           if (channel == null) {
             channel = null;
           }
+          return $q(function(resolve, reject) {
+            var err;
+            if (channel == null) {
+              err = 'Socket :: Error >> no socket channel specified.';
+              $log.error(err);
+              reject(err);
+            }
+            if (instance == null) {
+              err = 'Socket :: Error >> no socket connection established.';
+              $log.error(err);
+              reject(err);
+            }
+            if (debuggingEnabled) {
+              $log.info("Socket :: Unsubscribe to channel " + channel);
+            }
+            instance.unsubscribe(channel);
+            instance.unwatch(channel);
+            return resolve(true);
+          });
+        },
+        publish: function(channel, eventData) {
           if (channel == null) {
-            $log.error('Socket :: Error >> no socket channel specified.');
-            return;
+            channel = null;
           }
-          if (instance == null) {
-            $log.error('Socket :: Error >> no socket connection established.');
-            return;
+          if (eventData == null) {
+            eventData = {};
           }
-          if (debuggingEnabled) {
-            $log.info("Socket :: Unsubscribe to channel " + channel);
+          return $q(function(resolve, reject) {
+            var err;
+            if (channel == null) {
+              err = 'Socket :: Error >> no socket channel specified.';
+              $log.error(err);
+              reject(err);
+            }
+            if (instance == null) {
+              err = 'Socket :: Error >> no socket connection established.';
+              $log.error(err);
+              reject(err);
+            }
+            if (debuggingEnabled) {
+              $log.info("Socket :: Publish to channel " + channel + " >>", eventData);
+            }
+            instance.publish(channel, eventData);
+            return resolve(true);
+          });
+        },
+        toggleDebugging: function(enabled) {
+          if (enabled == null) {
+            enabled = false;
           }
-          instance.unsubscribe(channel);
-          return instance.unwatch(channel);
+          return debuggingEnabled = enabled;
         },
         subscriptions: function() {
           if (instance == null) {
@@ -130,26 +191,6 @@ Socket = (function() {
             return;
           }
           return instance.isSubscribed(channel);
-        },
-        publish: function(channel, eventData) {
-          if (channel == null) {
-            channel = null;
-          }
-          if (eventData == null) {
-            eventData = {};
-          }
-          if (channel == null) {
-            $log.error('Socket :: Error >> no socket channel specified.');
-            return;
-          }
-          if (!instance) {
-            $log.error('Socket :: Error >> no socket connection established.');
-            return;
-          }
-          if (debuggingEnabled) {
-            $log.info("Socket :: Event published to " + channel + " >> " + (JSON.stringify(eventData)));
-          }
-          return instance.publish(channel, eventData);
         }
       };
     }
