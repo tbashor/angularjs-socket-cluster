@@ -2331,8 +2331,14 @@ Socket = (function() {
             if (debuggingEnabled) {
               $log.info("Socket :: Publish to channel " + channel + " >>", eventData);
             }
-            instance.publish(channel, eventData);
-            return resolve(true);
+            return instance.publish(channel, eventData, function(err) {
+              if (err != null) {
+                $log.error("Socket :: Error >> publish failed >> " + err);
+                return reject(err);
+              } else {
+                return resolve(true);
+              }
+            });
           });
         },
         toggleDebugging: function(enabled) {
