@@ -64,6 +64,7 @@ class Socket
 
             # Generic events to listen for
             instance.on 'error', (err) ->
+              return if err is true # true denotes an error that should be squelched
               $log.error("Socket :: Error >> #{err}")
 
             instance.on 'subscribeFail', (err) ->
@@ -218,7 +219,6 @@ class Socket
 
             instance.publish channel, eventData, (err) ->
               if err?
-                $log.error("Socket :: Error >> publish failed >> #{err}")
                 reject(err)
               else
                 resolve(true)

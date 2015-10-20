@@ -2164,7 +2164,7 @@ module.exports={
 /**
  * AngularJS SocketCluster Interface
  * @author Ryan Page <ryanpager@gmail.com>
- * @version v1.1.1
+ * @version v1.1.3
  * @see https://github.com/ryanpager/angularjs-socket-cluster#readme
  * @license MIT
  */
@@ -2207,6 +2207,9 @@ Socket = (function() {
             }
             instance = socketCluster.connect(connectionOptions);
             instance.on('error', function(err) {
+              if (err === true) {
+                return;
+              }
               return $log.error("Socket :: Error >> " + err);
             });
             instance.on('subscribeFail', function(err) {
@@ -2335,7 +2338,6 @@ Socket = (function() {
             }
             return instance.publish(channel, eventData, function(err) {
               if (err != null) {
-                $log.error("Socket :: Error >> publish failed >> " + err);
                 return reject(err);
               } else {
                 return resolve(true);
