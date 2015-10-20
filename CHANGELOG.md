@@ -1,3 +1,15 @@
+<a name="1.1.2"></a>
+### 1.1.2 (2015-10-20)
+
+* Add in listening for individual socket events rather than just events on the
+channel. This will allow servers to broadcast individually.
+
+<a name="1.1.1"></a>
+### 1.1.1 (2015-10-20)
+
+* Fix the resolution of promises. They were blindly resolving rather than
+making sure the proper events fired.
+
 <a name="1.1.0"></a>
 ### 1.1.0 (2015-10-06)
 

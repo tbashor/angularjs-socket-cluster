@@ -131,9 +131,8 @@ class Socket
             if debuggingEnabled
               $log.info("Socket :: Subscribe to channel #{channel}")
 
-            # Subscribe to the channel and bind the event watcher so that we can
-            #  rebroadcast any information coming through the channel
-            instance.watch channel, (eventData) ->
+            # Setup event handling function
+            handleEvent = (eventData) ->
               # Error handling
               if eventData.$error?
                 if debuggingEnabled
@@ -150,9 +149,12 @@ class Socket
 
                 $rootScope.$broadcast "socket:#{eventData.$event}", eventData
 
+            # Subscribe to the channel and bind the event watcher so that we can
+            #  rebroadcast any information coming through the channel
+            instance.watch channel, handleEvent
+            instance.on 'single.publish', handleEvent
 
             instance.subscribe channel
-
 
             resolve(true)
 
