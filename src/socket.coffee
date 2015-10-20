@@ -214,9 +214,12 @@ class Socket
             if debuggingEnabled
               $log.info("Socket :: Publish to channel #{channel} >>", eventData)
 
-            instance.publish channel, eventData
-
-            resolve(true)
+            instance.publish channel, eventData, (err) ->
+              if err?
+                $log.error("Socket :: Error >> publish failed >> #{err}")
+                reject(err)
+              else
+                resolve(true)
 
         # @name toggleDebugging
         # @type {function}
