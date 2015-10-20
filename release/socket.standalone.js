@@ -1,7 +1,7 @@
 /**
  * AngularJS SocketCluster Interface
  * @author Ryan Page <ryanpager@gmail.com>
- * @version v1.1.0
+ * @version v1.1.1
  * @see https://github.com/ryanpager/angularjs-socket-cluster#readme
  * @license MIT
  */
@@ -87,7 +87,7 @@ Socket = (function() {
             channel = null;
           }
           return $q(function(resolve, reject) {
-            var err;
+            var err, handleEvent;
             if (channel == null) {
               err = 'Socket :: Error >> no socket channel specified.';
               $log.error(err);
@@ -101,7 +101,7 @@ Socket = (function() {
             if (debuggingEnabled) {
               $log.info("Socket :: Subscribe to channel " + channel);
             }
-            instance.watch(channel, function(eventData) {
+            handleEvent = function(eventData) {
               if (eventData.$error != null) {
                 if (debuggingEnabled) {
                   $log.error('Socket :: Event error >>', eventData);
@@ -117,7 +117,9 @@ Socket = (function() {
                 }
                 return $rootScope.$broadcast("socket:" + eventData.$event, eventData);
               });
-            });
+            };
+            instance.watch(channel, handleEvent);
+            instance.on('single.publish', handleEvent);
             instance.subscribe(channel);
             return resolve(true);
           });

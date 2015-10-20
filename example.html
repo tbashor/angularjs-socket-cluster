@@ -45,7 +45,7 @@
         SocketInterface.toggleDebugging(true);
 
         // Set a placeholder for the random channel
-        channel = 'talkfusion-socketclient-test';
+        channel = 'live-meeting-1234567890';
 
         // Connect to the socket
         SocketInterface
@@ -58,21 +58,20 @@
               .then(function() {
 
                 // Set up a listener for the dummy published event.
-                $rootScope.$on('socket:ping-pong', function(e, eventData) {
+                $rootScope.$on('socket:meeting:current-state', function(e, eventData) {
                   // Do something here...
                 });
 
                 // Publish some data to the channel
                 SocketInterface
                   .publish(channel, {
-                    $applications: [],
-                    $event: 'ping-pong',
+                    $applications: ['live-meeting'],
+                    $event: 'meeting:current-state',
                     $user: {
-                      name: 'Tester'
+                      name: 'Tester',
+                      invitation: '1234567890'
                     },
-                    data: {
-                      message: 'This is a ping message'
-                    }  
+                    data: {}  
                   })
                   .then(function() {
                     
