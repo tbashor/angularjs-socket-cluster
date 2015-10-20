@@ -1,3 +1,8 @@
+<a name="1.1.3"></a>
+### 1.1.3 (2015-10-20)
+
+* Squelch "true" errors that come back from single.publish events.
+
 <a name="1.1.2"></a>
 ### 1.1.2 (2015-10-20)
 

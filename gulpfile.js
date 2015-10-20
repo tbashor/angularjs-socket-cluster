@@ -92,6 +92,18 @@ gulp.task('uglify-package', function() {
     .pipe(gulp.dest('./release'));
 });
 
+// DEFAULT Task
+// ------------------------------------------------------------------
+
+gulp.task('default', [
+  'clean',
+  'lint',
+  'build-standalone',
+  'build-package',
+  'uglify-standalone',
+  'uglify-package'
+]);
+
 // WATCH Task
 // ------------------------------------------------------------------
 
