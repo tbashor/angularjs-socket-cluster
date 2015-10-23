@@ -101,7 +101,7 @@ class Socket
             unless instance?
               err = 'Socket :: Error >> no socket connection established.'
               $log.error(err)
-              reject(err)
+              return reject(err)
 
             instance.disconnect()
             resolve(true)
@@ -120,13 +120,13 @@ class Socket
             unless channel?
               err = 'Socket :: Error >> no socket channel specified.'
               $log.error(err)
-              reject(err)
+              return reject(err)
 
             # Make sure we have a socket connection
             unless instance?
               err = 'Socket :: Error >> no socket connection established.'
               $log.error(err)
-              reject(err)
+              return reject(err)
 
             # Debugging
             if debuggingEnabled
@@ -173,13 +173,13 @@ class Socket
             unless channel?
               err = 'Socket :: Error >> no socket channel specified.'
               $log.error(err)
-              reject(err)
+              return reject(err)
 
             # Make sure we have a socket connection
             unless instance?
               err = 'Socket :: Error >> no socket connection established.'
               $log.error(err)
-              reject(err)
+              return reject(err)
 
             # Debugging
             if debuggingEnabled
@@ -205,13 +205,13 @@ class Socket
             unless channel?
               err = 'Socket :: Error >> no socket channel specified.'
               $log.error(err)
-              reject(err)
+              return reject(err)
 
             # Make sure we have a socket connection
             unless instance?
               err = 'Socket :: Error >> no socket connection established.'
               $log.error(err)
-              reject(err)
+              return reject(err)
 
             # Debugging
             if debuggingEnabled

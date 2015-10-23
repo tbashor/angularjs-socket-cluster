@@ -79,7 +79,7 @@ Socket = (function() {
             if (instance == null) {
               err = 'Socket :: Error >> no socket connection established.';
               $log.error(err);
-              reject(err);
+              return reject(err);
             }
             instance.disconnect();
             return resolve(true);
@@ -94,12 +94,12 @@ Socket = (function() {
             if (channel == null) {
               err = 'Socket :: Error >> no socket channel specified.';
               $log.error(err);
-              reject(err);
+              return reject(err);
             }
             if (instance == null) {
               err = 'Socket :: Error >> no socket connection established.';
               $log.error(err);
-              reject(err);
+              return reject(err);
             }
             if (debuggingEnabled) {
               $log.info("Socket :: Subscribe to channel " + channel);
@@ -136,12 +136,12 @@ Socket = (function() {
             if (channel == null) {
               err = 'Socket :: Error >> no socket channel specified.';
               $log.error(err);
-              reject(err);
+              return reject(err);
             }
             if (instance == null) {
               err = 'Socket :: Error >> no socket connection established.';
               $log.error(err);
-              reject(err);
+              return reject(err);
             }
             if (debuggingEnabled) {
               $log.info("Socket :: Unsubscribe to channel " + channel);
@@ -163,12 +163,12 @@ Socket = (function() {
             if (channel == null) {
               err = 'Socket :: Error >> no socket channel specified.';
               $log.error(err);
-              reject(err);
+              return reject(err);
             }
             if (instance == null) {
               err = 'Socket :: Error >> no socket connection established.';
               $log.error(err);
-              reject(err);
+              return reject(err);
             }
             if (debuggingEnabled) {
               $log.info("Socket :: Publish to channel " + channel + " >>", eventData);
