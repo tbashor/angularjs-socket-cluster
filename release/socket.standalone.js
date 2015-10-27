@@ -1,7 +1,7 @@
 /**
  * AngularJS SocketCluster Interface
  * @author Ryan Page <ryanpager@gmail.com>
- * @version v1.1.3
+ * @version v1.1.5
  * @see https://github.com/ryanpager/angularjs-socket-cluster#readme
  * @license MIT
  */
@@ -44,7 +44,7 @@ Socket = (function() {
             }
             instance = socketCluster.connect(connectionOptions);
             instance.on('error', function(err) {
-              if (err === true) {
+              if (err === 'ignore') {
                 return;
               }
               return $log.error("Socket :: Error >> " + err);

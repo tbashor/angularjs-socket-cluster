@@ -64,7 +64,13 @@ class Socket
 
             # Generic events to listen for
             instance.on 'error', (err) ->
-              return if err is true # true denotes an error that should be squelched
+              # this is a workaround for a stupid SocketCluster bug that
+              #  prevents next(true) from working correctly
+              #
+              # 'ignore' denotes an error that should be squelched (most likely
+              #  a single publish event was also emitted so we can ignore this
+              #  one)
+              return if err is 'ignore'
               $log.error("Socket :: Error >> #{err}")
 
             instance.on 'subscribeFail', (err) ->
