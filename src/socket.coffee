@@ -224,7 +224,7 @@ class Socket
               $log.info("Socket :: Publish to channel #{channel} >>", eventData)
 
             instance.publish channel, eventData, (err) ->
-              if err?
+              if err? and err isnt 'ignore'
                 reject(err)
               else
                 resolve(true)

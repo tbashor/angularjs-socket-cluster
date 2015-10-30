@@ -95,6 +95,9 @@ gulp.task('uglify-package', function() {
 // DEFAULT Task
 // ------------------------------------------------------------------
 
+// for some reason this task fails most of the time, and doesn't fully run the
+//  rest of the time... just run this instead:
+//  gulp clean && gulp lint && gulp build-standalone && gulp build-package && gulp uglify-standalone && gulp uglify-package
 gulp.task('default', [
   'clean',
   'lint',

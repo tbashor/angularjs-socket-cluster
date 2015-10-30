@@ -2164,7 +2164,7 @@ module.exports={
 /**
  * AngularJS SocketCluster Interface
  * @author Ryan Page <ryanpager@gmail.com>
- * @version v1.1.5
+ * @version v1.1.6
  * @see https://github.com/ryanpager/angularjs-socket-cluster#readme
  * @license MIT
  */
@@ -2337,7 +2337,7 @@ Socket = (function() {
               $log.info("Socket :: Publish to channel " + channel + " >>", eventData);
             }
             return instance.publish(channel, eventData, function(err) {
-              if (err != null) {
+              if ((err != null) && err !== 'ignore') {
                 return reject(err);
               } else {
                 return resolve(true);
