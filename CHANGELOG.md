@@ -1,3 +1,23 @@
+<a name="1.1.7"></a>
+### 1.1.7 (2015-11-02)
+
+* Replace "ignore" handling with check for "Action was silently blocked by publishIn middleware" error now that socketcluster fixed ignore bug.
+
+<a name="1.1.6"></a>
+### 1.1.6 (2015-10-30)
+
+* Adds "ignore" handling for publish events.
+
+<a name="1.1.5"></a>
+### 1.1.5 (2015-10-23)
+
+* Change "ignore" handling for socketcluster bug.
+
+<a name="1.1.4"></a>
+### 1.1.4 (2015-10-23)
+
+* Improve rejected promise handling.
+
 <a name="1.1.3"></a>
 ### 1.1.3 (2015-10-20)
 

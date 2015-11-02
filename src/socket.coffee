@@ -64,13 +64,7 @@ class Socket
 
             # Generic events to listen for
             instance.on 'error', (err) ->
-              # this is a workaround for a stupid SocketCluster bug that
-              #  prevents next(true) from working correctly
-              #
-              # 'ignore' denotes an error that should be squelched (most likely
-              #  a single publish event was also emitted so we can ignore this
-              #  one)
-              return if err is 'ignore'
+              return if err is 'Action was silently blocked by publishIn middleware'
               $log.error("Socket :: Error >> #{err}")
 
             instance.on 'subscribeFail', (err) ->
@@ -224,7 +218,7 @@ class Socket
               $log.info("Socket :: Publish to channel #{channel} >>", eventData)
 
             instance.publish channel, eventData, (err) ->
-              if err? and err isnt 'ignore'
+              if err? and err isnt 'Action was silently blocked by publishIn middleware'
                 reject(err)
               else
                 resolve(true)

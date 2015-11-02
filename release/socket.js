@@ -2164,7 +2164,7 @@ module.exports={
 /**
  * AngularJS SocketCluster Interface
  * @author Ryan Page <ryanpager@gmail.com>
- * @version v1.1.6
+ * @version v1.1.7
  * @see https://github.com/ryanpager/angularjs-socket-cluster#readme
  * @license MIT
  */
@@ -2207,7 +2207,7 @@ Socket = (function() {
             }
             instance = socketCluster.connect(connectionOptions);
             instance.on('error', function(err) {
-              if (err === 'ignore') {
+              if (err === 'Action was silently blocked by publishIn middleware') {
                 return;
               }
               return $log.error("Socket :: Error >> " + err);
@@ -2337,7 +2337,7 @@ Socket = (function() {
               $log.info("Socket :: Publish to channel " + channel + " >>", eventData);
             }
             return instance.publish(channel, eventData, function(err) {
-              if ((err != null) && err !== 'ignore') {
+              if ((err != null) && err !== 'Action was silently blocked by publishIn middleware') {
                 return reject(err);
               } else {
                 return resolve(true);
