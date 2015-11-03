@@ -1,3 +1,8 @@
+<a name="1.1.8"></a>
+### 1.1.7 (2015-11-02)
+
+* Let events with $error objects pass through.
+
 <a name="1.1.7"></a>
 ### 1.1.7 (2015-11-02)
 
