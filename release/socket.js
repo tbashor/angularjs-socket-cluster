@@ -2164,7 +2164,7 @@ module.exports={
 /**
  * AngularJS SocketCluster Interface
  * @author Ryan Page <ryanpager@gmail.com>
- * @version v1.1.7
+ * @version v1.1.8
  * @see https://github.com/ryanpager/angularjs-socket-cluster#readme
  * @license MIT
  */
@@ -2272,7 +2272,6 @@ Socket = (function() {
                 if (debuggingEnabled) {
                   $log.error('Socket :: Event error >>', eventData);
                 }
-                return;
               }
               if (debuggingEnabled) {
                 $log.info('Socket :: Event received >>', eventData);

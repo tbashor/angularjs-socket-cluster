@@ -138,7 +138,6 @@ class Socket
               if eventData.$error?
                 if debuggingEnabled
                   $log.error('Socket :: Event error >>', eventData)
-                return
 
               # Debugging
               if debuggingEnabled
