@@ -1,184 +1,4 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.socketCluster = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-'use strict';
-
-// If obj.hasOwnProperty has been overridden, then calling
-// obj.hasOwnProperty(prop) will break.
-// See: https://github.com/joyent/node/issues/1707
-function hasOwnProperty(obj, prop) {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
-}
-
-module.exports = function(qs, sep, eq, options) {
-  sep = sep || '&';
-  eq = eq || '=';
-  var obj = {};
-
-  if (typeof qs !== 'string' || qs.length === 0) {
-    return obj;
-  }
-
-  var regexp = /\+/g;
-  qs = qs.split(sep);
-
-  var maxKeys = 1000;
-  if (options && typeof options.maxKeys === 'number') {
-    maxKeys = options.maxKeys;
-  }
-
-  var len = qs.length;
-  // maxKeys <= 0 means that we should not limit keys count
-  if (maxKeys > 0 && len > maxKeys) {
-    len = maxKeys;
-  }
-
-  for (var i = 0; i < len; ++i) {
-    var x = qs[i].replace(regexp, '%20'),
-        idx = x.indexOf(eq),
-        kstr, vstr, k, v;
-
-    if (idx >= 0) {
-      kstr = x.substr(0, idx);
-      vstr = x.substr(idx + 1);
-    } else {
-      kstr = x;
-      vstr = '';
-    }
-
-    k = decodeURIComponent(kstr);
-    v = decodeURIComponent(vstr);
-
-    if (!hasOwnProperty(obj, k)) {
-      obj[k] = v;
-    } else if (isArray(obj[k])) {
-      obj[k].push(v);
-    } else {
-      obj[k] = [obj[k], v];
-    }
-  }
-
-  return obj;
-};
-
-var isArray = Array.isArray || function (xs) {
-  return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-},{}],2:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-'use strict';
-
-var stringifyPrimitive = function(v) {
-  switch (typeof v) {
-    case 'string':
-      return v;
-
-    case 'boolean':
-      return v ? 'true' : 'false';
-
-    case 'number':
-      return isFinite(v) ? v : '';
-
-    default:
-      return '';
-  }
-};
-
-module.exports = function(obj, sep, eq, name) {
-  sep = sep || '&';
-  eq = eq || '=';
-  if (obj === null) {
-    obj = undefined;
-  }
-
-  if (typeof obj === 'object') {
-    return map(objectKeys(obj), function(k) {
-      var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
-      if (isArray(obj[k])) {
-        return map(obj[k], function(v) {
-          return ks + encodeURIComponent(stringifyPrimitive(v));
-        }).join(sep);
-      } else {
-        return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
-      }
-    }).join(sep);
-
-  }
-
-  if (!name) return '';
-  return encodeURIComponent(stringifyPrimitive(name)) + eq +
-         encodeURIComponent(stringifyPrimitive(obj));
-};
-
-var isArray = Array.isArray || function (xs) {
-  return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-function map (xs, f) {
-  if (xs.map) return xs.map(f);
-  var res = [];
-  for (var i = 0; i < xs.length; i++) {
-    res.push(f(xs[i], i));
-  }
-  return res;
-}
-
-var objectKeys = Object.keys || function (obj) {
-  var res = [];
-  for (var key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
-  }
-  return res;
-};
-
-},{}],3:[function(require,module,exports){
-'use strict';
-
-exports.decode = exports.parse = require('./decode');
-exports.encode = exports.stringify = require('./encode');
-
-},{"./decode":1,"./encode":2}],4:[function(require,module,exports){
-var pkg = require('./package.json');
 var SCSocket = require('./lib/scsocket');
 module.exports.SCSocket = SCSocket;
 
@@ -188,16 +8,27 @@ module.exports.connect = function (options) {
   return new SCSocket(options);
 };
 
-module.exports.version = pkg.version;
+module.exports.version = '2.3.18';
 
-},{"./lib/scsocket":8,"./package.json":19,"sc-emitter":14}],5:[function(require,module,exports){
+},{"./lib/scsocket":5,"sc-emitter":11}],2:[function(require,module,exports){
 (function (global){
 var AuthEngine = function () {
   this._internalStorage = {};
 };
 
+AuthEngine.prototype._isLocalStorageEnabled = function () {
+  var err;
+  try {
+    // Some browsers will throw an error here if localStorage is disabled.
+    global.localStorage;
+  } catch (e) {
+    err = e;
+  }
+  return !err;
+};
+
 AuthEngine.prototype.saveToken = function (name, token, options, callback) {
-  if (global.localStorage) {
+  if (this._isLocalStorageEnabled() && global.localStorage) {
     global.localStorage.setItem(name, token);
   } else {
     this._internalStorage[name] = token;
@@ -206,18 +37,18 @@ AuthEngine.prototype.saveToken = function (name, token, options, callback) {
 };
 
 AuthEngine.prototype.removeToken = function (name, callback) {
-  if (global.localStorage) {
+  if (this._isLocalStorageEnabled() && global.localStorage) {
     global.localStorage.removeItem(name);
   }
   delete this._internalStorage[name];
-  
+
   callback && callback();
 };
 
 AuthEngine.prototype.loadToken = function (name, callback) {
   var token;
-  
-  if (global.localStorage) {
+
+  if (this._isLocalStorageEnabled() && global.localStorage) {
     token = global.localStorage.getItem(name);
   } else {
     token = this._internalStorage[name] || null;
@@ -226,8 +57,9 @@ AuthEngine.prototype.loadToken = function (name, callback) {
 };
 
 module.exports.AuthEngine = AuthEngine;
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],6:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 module.exports.create = (function () {
   function F() {};
 
@@ -239,7 +71,7 @@ module.exports.create = (function () {
     return new F();
   }
 })();
-},{}],7:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 var Response = function (socket, id) {
   this.socket = socket;
   this.id = id;
@@ -292,7 +124,7 @@ Response.prototype.callback = function (error, data) {
 
 module.exports.Response = Response;
 
-},{}],8:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 (function (global){
 var SCEmitter = require('sc-emitter').SCEmitter;
 var SCChannel = require('sc-channel').SCChannel;
@@ -311,9 +143,9 @@ var isBrowser = typeof window != 'undefined';
 
 var SCSocket = function (options) {
   var self = this;
-  
+
   SCEmitter.call(this);
-  
+
   var opts = {
     port: null,
     autoReconnect: true,
@@ -333,28 +165,29 @@ var SCSocket = function (options) {
       opts[i] = options[i];
     }
   }
-  
+
   this.id = null;
   this.state = this.CLOSED;
-  
+  this.pendingConnectCallback = false;
+
   this.ackTimeout = opts.ackTimeout;
-  
+
   // pingTimeout will be ackTimeout at the start, but it will
   // be updated with values provided by the 'connect' event
   this.pingTimeout = this.ackTimeout;
-  
+
   var maxTimeout = Math.pow(2, 31) - 1;
-  
+
   var verifyDuration = function (propertyName) {
     if (self[propertyName] > maxTimeout) {
       throw new Error('The ' + propertyName +
         ' value provided exceeded the maximum amount allowed');
     }
   };
-  
+
   verifyDuration('ackTimeout');
   verifyDuration('pingTimeout');
-  
+
   this._localEvents = {
     'connect': 1,
     'connectAbort': 1,
@@ -369,19 +202,25 @@ var SCSocket = function (options) {
     'authenticate': 1,
     'removeAuthToken': 1
   };
-  
+
   this._connectAttempts = 0;
-  
+
   this._emitBuffer = new LinkedList();
   this._channels = {};
-  
+
   this.options = opts;
-  
+
+  this._cid = 1;
+
+  this.options.callIdGenerator = function () {
+    return self._callIdGenerator();
+  };
+
   if (this.options.autoReconnect) {
     if (this.options.autoReconnectOptions == null) {
       this.options.autoReconnectOptions = {};
     }
-    
+
     var reconnectOptions = this.options.autoReconnectOptions;
     if (reconnectOptions.initialDelay == null) {
       reconnectOptions.initialDelay = 10000;
@@ -396,11 +235,11 @@ var SCSocket = function (options) {
       reconnectOptions.maxDelay = 60000;
     }
   }
-  
+
   if (this.options.subscriptionRetryOptions == null) {
     this.options.subscriptionRetryOptions = {};
   }
-  
+
   if (this.options.authEngine) {
     this.auth = this.options.authEngine;
   } else {
@@ -408,7 +247,7 @@ var SCSocket = function (options) {
   }
 
   this.options.path = this.options.path.replace(/\/$/, '') + '/';
-  
+
   this.options.query = opts.query || {};
   if (typeof this.options.query == 'string') {
     this.options.query = querystring.parse(this.options.query);
@@ -416,11 +255,11 @@ var SCSocket = function (options) {
 
   this.options.port = opts.port || (global.location && location.port ?
     location.port : (this.options.secure ? 443 : 80));
-  
+
   this.connect();
-  
+
   this._channelEmitter = new SCEmitter();
-  
+
   if (isBrowser) {
     var unloadHandler = function () {
       self.disconnect();
@@ -469,7 +308,7 @@ SCSocket.prototype._privateEventHandlerMap = {
   },
   '#publish': function (data) {
     var isSubscribed = this.isSubscribed(data.channel, true);
-    
+
     if (isSubscribed) {
       this._channelEmitter.emit(data.channel, data.data);
     }
@@ -485,11 +324,11 @@ SCSocket.prototype._privateEventHandlerMap = {
   },
   '#setAuthToken': function (data, response) {
     var self = this;
-    
+
     if (data) {
       var triggerAuthenticate = function (err) {
         if (err) {
-          // This is a non-fatal error, we don't want to close the connection 
+          // This is a non-fatal error, we don't want to close the connection
           // because of this but we do want to notify the server and throw an error
           // on the client.
           response.error(err.message || err);
@@ -499,7 +338,7 @@ SCSocket.prototype._privateEventHandlerMap = {
           response.end();
         }
       };
-      
+
       this.auth.saveToken(this.options.authTokenName, data.token, {}, triggerAuthenticate);
     } else {
       response.error('No token data provided by #setAuthToken event');
@@ -507,7 +346,7 @@ SCSocket.prototype._privateEventHandlerMap = {
   },
   '#removeAuthToken': function (data, response) {
     var self = this;
-    
+
     this.auth.removeToken(this.options.authTokenName, function (err) {
       if (err) {
         // Non-fatal error - Do not close the connection
@@ -524,6 +363,10 @@ SCSocket.prototype._privateEventHandlerMap = {
   }
 };
 
+SCSocket.prototype._callIdGenerator = function () {
+  return this._cid++;
+};
+
 SCSocket.prototype.getState = function () {
   return this.state;
 };
@@ -534,7 +377,7 @@ SCSocket.prototype.getBytesReceived = function () {
 
 SCSocket.prototype.removeAuthToken = function (callback) {
   var self = this;
-  
+
   this.auth.removeToken(this.options.authTokenName, function (err) {
     callback && callback(err);
     if (err) {
@@ -548,37 +391,37 @@ SCSocket.prototype.removeAuthToken = function (callback) {
 
 SCSocket.prototype.connect = SCSocket.prototype.open = function () {
   var self = this;
-  
+
   if (this.state == this.CLOSED) {
     clearTimeout(this._reconnectTimeout);
-    
+
     this.state = this.CONNECTING;
-    
+
     if (this.transport) {
       this.transport.off();
     }
-    
+
     this.transport = new SCTransport(this.auth, this.options);
 
     this.transport.on('open', function (status) {
       self.state = self.OPEN;
       self._onSCOpen(status);
     });
-    
+
     this.transport.on('error', function (err) {
       self._onSCError(err);
     });
-    
+
     this.transport.on('close', function (code, data) {
       self.state = self.CLOSED;
       self._onSCClose(code, data);
     });
-    
+
     this.transport.on('openAbort', function (code, data) {
       self.state = self.CLOSED;
       self._onSCClose(code, data, true);
     });
-    
+
     this.transport.on('event', function (event, data, res) {
       self._onSCEvent(event, data, res);
     });
@@ -592,7 +435,7 @@ SCSocket.prototype.reconnect = function () {
 
 SCSocket.prototype.disconnect = function (code, data) {
   code = code || 1000;
-  
+
   if (this.state == this.OPEN) {
     var packet = {
       code: code,
@@ -600,7 +443,7 @@ SCSocket.prototype.disconnect = function (code, data) {
     };
     this.transport.emit('#disconnect', packet);
     this.transport.close(code);
-    
+
   } else if (this.state == this.CONNECTING) {
     this.transport.close(code);
   }
@@ -609,7 +452,7 @@ SCSocket.prototype.disconnect = function (code, data) {
 // Perform client-initiated authentication by providing an encrypted token string
 SCSocket.prototype.authenticate = function (encryptedAuthToken, callback) {
   var self = this;
-  
+
   this.emit('#authenticate', encryptedAuthToken, function (err, authStatus) {
     if (err) {
       callback && callback(err, authStatus);
@@ -628,25 +471,25 @@ SCSocket.prototype.authenticate = function (encryptedAuthToken, callback) {
 
 SCSocket.prototype._tryReconnect = function (initialDelay) {
   var self = this;
-  
+
   var exponent = this._connectAttempts++;
   var reconnectOptions = this.options.autoReconnectOptions;
   var timeout;
-  
+
   if (initialDelay == null || exponent > 0) {
     var initialTimeout = Math.round(reconnectOptions.initialDelay + (reconnectOptions.randomness || 0) * Math.random());
-    
+
     timeout = Math.round(initialTimeout * Math.pow(reconnectOptions.multiplier, exponent));
   } else {
     timeout = initialDelay;
   }
-  
+
   if (timeout > reconnectOptions.maxDelay) {
     timeout = reconnectOptions.maxDelay;
   }
-  
+
   clearTimeout(this._reconnectTimeout);
-  
+
   this._reconnectTimeout = setTimeout(function () {
     self.connect();
   }, timeout);
@@ -654,35 +497,37 @@ SCSocket.prototype._tryReconnect = function (initialDelay) {
 
 SCSocket.prototype._onSCOpen = function (status) {
   var self = this;
-  
+
   if (status) {
     this.id = status.id;
     this.pingTimeout = status.pingTimeout;
     this.transport.pingTimeout = this.pingTimeout;
   }
-  
+
   this._connectAttempts = 0;
   if (this.options.autoProcessSubscriptions) {
     this.processPendingSubscriptions();
+  } else {
+    this.pendingConnectCallback = true;
   }
-  
+
   // If the user invokes the callback while in autoProcessSubscriptions mode, it
   // won't break anything - The processPendingSubscriptions() call will be a no-op.
   SCEmitter.prototype.emit.call(this, 'connect', status, function () {
     self.processPendingSubscriptions();
   });
-  
+
   this._flushEmitBuffer();
 };
 
 SCSocket.prototype._onSCError = function (err) {
   var self = this;
-  
+
   // Throw error in different stack frame so that error handling
   // cannot interfere with a reconnect action.
   setTimeout(function () {
     if (self.listeners('error').length < 1) {
-        throw err;
+      throw err;
     } else {
       SCEmitter.prototype.emit.call(self, 'error', err);
     }
@@ -696,12 +541,12 @@ SCSocket.prototype._suspendSubscriptions = function () {
       channel = this._channels[channelName];
       if (channel.state == channel.SUBSCRIBED ||
         channel.state == channel.PENDING) {
-        
+
         newState = channel.PENDING;
       } else {
         newState = channel.UNSUBSCRIBED;
       }
-      
+
       this._triggerChannelUnsubscribe(channel, newState);
     }
   }
@@ -709,22 +554,22 @@ SCSocket.prototype._suspendSubscriptions = function () {
 
 SCSocket.prototype._onSCClose = function (code, data, openAbort) {
   var self = this;
-  
+
   this.id = null;
-  
+
   if (this.transport) {
     this.transport.off();
   }
   clearTimeout(this._reconnectTimeout);
 
   this._suspendSubscriptions();
-  
+
   if (openAbort) {
     SCEmitter.prototype.emit.call(self, 'connectAbort', code, data);
   } else {
     SCEmitter.prototype.emit.call(self, 'disconnect', code, data);
   }
-  
+
   // Try to reconnect
   // on server ping timeout (4000)
   // or on client pong timeout (4001)
@@ -738,12 +583,12 @@ SCSocket.prototype._onSCClose = function (code, data, openAbort) {
       // if the client wakes up after a period of inactivity and in this case we
       // want to re-establish the connection as soon as possible.
       this._tryReconnect(0);
-      
-    } else if (code == 1006 || code == 4003) {
+
+    } else if (code != 1000) {
       this._tryReconnect();
     }
   }
-  
+
   if (!SCSocket.ignoreStatuses[code]) {
     var err = new Error(SCSocket.errorStatuses[code] || 'Socket connection failed for unknown reasons');
     err.code = code;
@@ -756,7 +601,9 @@ SCSocket.prototype._onSCEvent = function (event, data, res) {
   if (handler) {
     handler.call(this, data, res);
   } else {
-    SCEmitter.prototype.emit.call(this, event, data, res);
+    SCEmitter.prototype.emit.call(this, event, data, function () {
+      res && res.callback.apply(res, arguments);
+    });
   }
 };
 
@@ -785,7 +632,7 @@ SCSocket.prototype._handleEventAckTimeout = function (eventObject, eventNode) {
   var errorMessage = "Event response for '" + eventObject.event + "' timed out";
   var error = new Error(errorMessage);
   error.type = 'timeout';
-  
+
   var callback = eventObject.callback;
   delete eventObject.callback;
   if (eventNode) {
@@ -797,7 +644,7 @@ SCSocket.prototype._handleEventAckTimeout = function (eventObject, eventNode) {
 
 SCSocket.prototype._emit = function (event, data, callback) {
   var self = this;
-  
+
   if (this.state == this.CLOSED) {
     this.connect();
   }
@@ -806,10 +653,10 @@ SCSocket.prototype._emit = function (event, data, callback) {
     data: data,
     callback: callback
   };
-  
+
   var eventNode = new LinkedList.Item();
   eventNode.data = eventObject;
-  
+
   // Events which do not have a callback will be treated as volatile
   if (callback) {
     eventObject.timeout = setTimeout(function () {
@@ -817,7 +664,7 @@ SCSocket.prototype._emit = function (event, data, callback) {
     }, this.ackTimeout);
   }
   this._emitBuffer.append(eventNode);
-  
+
   if (this.state == this.OPEN) {
     this._flushEmitBuffer();
   }
@@ -843,10 +690,10 @@ SCSocket.prototype.publish = function (channelName, data, callback) {
 
 SCSocket.prototype._triggerChannelSubscribe = function (channel) {
   var channelName = channel.name;
-  
+
   if (channel.state != channel.SUBSCRIBED) {
     channel.state = channel.SUBSCRIBED;
-    
+
     channel.emit('subscribe', channelName);
     SCEmitter.prototype.emit.call(this, 'subscribe', channelName);
   }
@@ -854,10 +701,10 @@ SCSocket.prototype._triggerChannelSubscribe = function (channel) {
 
 SCSocket.prototype._triggerChannelSubscribeFail = function (err, channel) {
   var channelName = channel.name;
-  
+
   if (channel.state != channel.UNSUBSCRIBED) {
     channel.state = channel.UNSUBSCRIBED;
-    
+
     channel.emit('subscribeFail', err, channelName);
     SCEmitter.prototype.emit.call(this, 'subscribeFail', err, channelName);
   }
@@ -873,9 +720,9 @@ SCSocket.prototype._cancelPendingSubscribeCallback = function (channel) {
 
 SCSocket.prototype._trySubscribe = function (channel) {
   var self = this;
-  
+
   // We can only ever have one pending subscribe action at any given time on a channel
-  if (this.state == this.OPEN && channel._pendingSubscriptionCid == null) {
+  if (this.state == this.OPEN && !this.pendingConnectCallback && channel._pendingSubscriptionCid == null) {
     var options = {
       noTimeout: true
     };
@@ -896,7 +743,7 @@ SCSocket.prototype._trySubscribe = function (channel) {
 
 SCSocket.prototype.subscribe = function (channelName) {
   var channel = this._channels[channelName];
-  
+
   if (!channel) {
     channel = new SCChannel(channelName, this);
     this._channels[channelName] = channel;
@@ -906,21 +753,21 @@ SCSocket.prototype.subscribe = function (channelName) {
     channel.state = channel.PENDING;
     this._trySubscribe(channel);
   }
-  
+
   return channel;
 };
 
 SCSocket.prototype._triggerChannelUnsubscribe = function (channel, newState) {
   var channelName = channel.name;
   var oldState = channel.state;
-  
+
   if (newState) {
     channel.state = newState;
   } else {
     channel.state = channel.UNSUBSCRIBED;
   }
   this._cancelPendingSubscribeCallback(channel);
-  
+
   if (oldState == channel.SUBSCRIBED) {
     channel.emit('unsubscribe', channelName);
     SCEmitter.prototype.emit.call(this, 'unsubscribe', channelName);
@@ -929,14 +776,14 @@ SCSocket.prototype._triggerChannelUnsubscribe = function (channel, newState) {
 
 SCSocket.prototype._tryUnsubscribe = function (channel) {
   var self = this;
-  
+
   if (this.state == this.OPEN) {
     var options = {
       noTimeout: true
     };
     // If there is a pending subscribe action, cancel the callback
     this._cancelPendingSubscribeCallback(channel);
-    
+
     // This operation cannot fail because the TCP protocol guarantees delivery
     // so long as the connection remains open. If the connection closes,
     // the server will automatically unsubscribe the socket and thus complete
@@ -948,10 +795,10 @@ SCSocket.prototype._tryUnsubscribe = function (channel) {
 SCSocket.prototype.unsubscribe = function (channelName) {
 
   var channel = this._channels[channelName];
-  
+
   if (channel) {
     if (channel.state != channel.UNSUBSCRIBED) {
-    
+
       this._triggerChannelUnsubscribe(channel);
       this._tryUnsubscribe(channel);
     }
@@ -960,7 +807,7 @@ SCSocket.prototype.unsubscribe = function (channelName) {
 
 SCSocket.prototype.channel = function (channelName) {
   var currentChannel = this._channels[channelName];
-  
+
   if (!currentChannel) {
     currentChannel = new SCChannel(channelName, this);
     this._channels[channelName] = currentChannel;
@@ -981,14 +828,14 @@ SCSocket.prototype.subscriptions = function (includePending) {
   for (var channelName in this._channels) {
     if (this._channels.hasOwnProperty(channelName)) {
       channel = this._channels[channelName];
-      
+
       if (includePending) {
-        includeChannel = channel && (channel.state == channel.SUBSCRIBED || 
+        includeChannel = channel && (channel.state == channel.SUBSCRIBED ||
           channel.state == channel.PENDING);
       } else {
         includeChannel = channel && channel.state == channel.SUBSCRIBED;
       }
-      
+
       if (includeChannel) {
         subs.push(channelName);
       }
@@ -1008,14 +855,16 @@ SCSocket.prototype.isSubscribed = function (channel, includePending) {
 
 SCSocket.prototype.processPendingSubscriptions = function () {
   var self = this;
-  
+
+  this.pendingConnectCallback = false;
+
   var channels = [];
   for (var channelName in this._channels) {
     if (this._channels.hasOwnProperty(channelName)) {
       channels.push(channelName);
     }
   }
-  
+
   for (var i in this._channels) {
     if (this._channels.hasOwnProperty(i)) {
       (function (channel) {
@@ -1028,6 +877,9 @@ SCSocket.prototype.processPendingSubscriptions = function () {
 };
 
 SCSocket.prototype.watch = function (channelName, handler) {
+  if (typeof handler != 'function') {
+    throw new Error('No handler function was provided');
+  }
   this._channelEmitter.on(channelName, handler);
 };
 
@@ -1046,8 +898,8 @@ SCSocket.prototype.watchers = function (channelName) {
 module.exports = SCSocket;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./auth":5,"./objectcreate":6,"./response":7,"./sctransport":9,"linked-list":11,"querystring":3,"sc-channel":12,"sc-emitter":14}],9:[function(require,module,exports){
-var WebSocket = require('ws');
+},{"./auth":2,"./objectcreate":3,"./response":4,"./sctransport":6,"linked-list":8,"querystring":18,"sc-channel":9,"sc-emitter":11}],6:[function(require,module,exports){
+var WebSocket = require('sc-ws');
 var SCEmitter = require('sc-emitter').SCEmitter;
 var formatter = require('sc-formatter');
 var Response = require('./response').Response;
@@ -1058,11 +910,11 @@ var SCTransport = function (authEngine, options) {
   this.auth = authEngine;
   this.options = options;
   this.pingTimeout = options.ackTimeout;
-  
-  this._cid = 1;
+  this.callIdGenerator = options.callIdGenerator;
+
   this._pingTimeoutTicker = null;
   this._callbackMap = {};
-  
+
   this.open();
 };
 
@@ -1095,38 +947,46 @@ SCTransport.prototype.uri = function () {
   return schema + '://' + this.options.hostname + port + this.options.path + query;
 };
 
-SCTransport.prototype._nextCallId = function () {
-  return this._cid++;
-};
-
 SCTransport.prototype.open = function () {
   var self = this;
-  
+
   this.state = this.CONNECTING;
   var uri = this.uri();
-  
+
   var wsSocket = new WebSocket(uri, null, this.options);
   wsSocket.binaryType = this.options.binaryType;
   this.socket = wsSocket;
-  
+
   wsSocket.onopen = function () {
     self._onOpen();
   };
-  
+
   wsSocket.onclose = function (event) {
     self._onClose(event.code, event.reason);
   };
-  
+
   wsSocket.onmessage = function (message, flags) {
     self._onMessage(message.data);
+  };
+
+  wsSocket.onerror = function (error) {
+    // The onclose event will be called automatically after the onerror event
+    // if the socket is connected - Otherwise, if it's in the middle of
+    // connecting, we want to close it manually with a 1006 - This is necessary
+    // to prevent inconsistent behavior when running the client in Node.js
+    // vs in a browser.
+
+    if (self.state === self.CONNECTING) {
+      self._onClose(1006);
+    }
   };
 };
 
 SCTransport.prototype._onOpen = function () {
   var self = this;
-  
+
   this._resetPingTimeout();
-  
+
   this._handshake(function (err, status) {
     if (err) {
       self._onError(err);
@@ -1162,11 +1022,12 @@ SCTransport.prototype._onClose = function (code, data) {
   delete this.socket.onopen;
   delete this.socket.onclose;
   delete this.socket.onmessage;
-    
+  delete this.socket.onerror;
+
   if (this.state == this.OPEN) {
     this.state = this.CLOSED;
     SCEmitter.prototype.emit.call(this, 'close', code, data);
-    
+
   } else if (this.state == this.CONNECTING) {
     this.state = this.CLOSED;
     SCEmitter.prototype.emit.call(this, 'openAbort', code, data);
@@ -1175,7 +1036,7 @@ SCTransport.prototype._onClose = function (code, data) {
 
 SCTransport.prototype._onMessage = function (message) {
   SCEmitter.prototype.emit.call(this, 'event', 'message', message);
-  
+
   // If ping
   if (message == '1') {
     this._resetPingTimeout();
@@ -1190,7 +1051,7 @@ SCTransport.prototype._onMessage = function (message) {
       obj = message;
     }
     var event = obj.event;
-    
+
     if (event) {
       var response = new Response(this, obj.cid);
       SCEmitter.prototype.emit.call(this, 'event', event, obj.data, response);
@@ -1199,7 +1060,10 @@ SCTransport.prototype._onMessage = function (message) {
       if (eventObject) {
         clearTimeout(eventObject.timeout);
         delete this._callbackMap[obj.rid];
-        eventObject.callback(obj.error, obj.data);
+
+        if (eventObject.callback) {
+          eventObject.callback(obj.error, obj.data);
+        }
       }
       if (obj.error) {
         this._onError(obj.error);
@@ -1216,10 +1080,10 @@ SCTransport.prototype._onError = function (err) {
 
 SCTransport.prototype._resetPingTimeout = function () {
   var self = this;
-  
+
   var now = (new Date()).getTime();
   clearTimeout(this._pingTimeoutTicker);
-  
+
   this._pingTimeoutTicker = setTimeout(function () {
     self._onClose(4000);
     self.socket.close(4000);
@@ -1232,17 +1096,17 @@ SCTransport.prototype.getBytesReceived = function () {
 
 SCTransport.prototype.close = function (code, data) {
   code = code || 1000;
-  
+
   if (this.state == this.OPEN) {
     var packet = {
       code: code,
       data: data
     };
     this.emit('#disconnect', packet);
-    
+
     this._onClose(code, data);
     this.socket.close(code);
-    
+
   } else if (this.state == this.CONNECTING) {
     this._onClose(code, data);
     this.socket.close(code);
@@ -1250,18 +1114,18 @@ SCTransport.prototype.close = function (code, data) {
 };
 
 SCTransport.prototype.emitRaw = function (eventObject) {
-  eventObject.cid = this._nextCallId();
-  
+  eventObject.cid = this.callIdGenerator();
+
   if (eventObject.callback) {
     this._callbackMap[eventObject.cid] = eventObject;
   }
-  
+
   var simpleEventObject = {
     event: eventObject.event,
     data: eventObject.data,
     cid: eventObject.cid
   };
-  
+
   this.sendObject(simpleEventObject);
   return eventObject.cid;
 };
@@ -1271,7 +1135,7 @@ SCTransport.prototype._handleEventAckTimeout = function (eventObject) {
   var errorMessage = "Event response for '" + eventObject.event + "' timed out";
   var error = new Error(errorMessage);
   error.type = 'timeout';
-  
+
   if (eventObject.cid) {
     delete this._callbackMap[eventObject.cid];
   }
@@ -1284,9 +1148,9 @@ SCTransport.prototype._handleEventAckTimeout = function (eventObject) {
 // The last two optional arguments (a and b) can be options and/or callback
 SCTransport.prototype.emit = function (event, data, a, b) {
   var self = this;
-  
+
   var callback, options;
-  
+
   if (b) {
     options = a;
     callback = b;
@@ -1298,19 +1162,19 @@ SCTransport.prototype.emit = function (event, data, a, b) {
       options = a;
     }
   }
-  
+
   var eventObject = {
     event: event,
     data: data,
     callback: callback
   };
-  
+
   if (callback && !options.noTimeout) {
     eventObject.timeout = setTimeout(function () {
       self._handleEventAckTimeout(eventObject);
     }, this.options.ackTimeout);
   }
-  
+
   var cid = null;
   if (this.state == this.OPEN || options.force) {
     cid = this.emitRaw(eventObject);
@@ -1339,12 +1203,21 @@ SCTransport.prototype.send = function (data) {
 };
 
 SCTransport.prototype.sendObject = function (object) {
-  this.send(this.stringify(object));
+  var str, formatError;
+  try {
+    str = this.stringify(object);
+  } catch (err) {
+    formatError = err;
+    this._onError(formatError);
+  }
+  if (!formatError) {
+    this.send(str);
+  }
 };
 
 module.exports.SCTransport = SCTransport;
 
-},{"./response":7,"querystring":3,"sc-emitter":14,"sc-formatter":17,"ws":18}],10:[function(require,module,exports){
+},{"./response":4,"querystring":18,"sc-emitter":11,"sc-formatter":14,"sc-ws":15}],7:[function(require,module,exports){
 'use strict';
 
 /**
@@ -1732,12 +1605,12 @@ ListItemPrototype.append = function (item) {
 
 module.exports = List;
 
-},{}],11:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./_source/linked-list.js');
 
-},{"./_source/linked-list.js":10}],12:[function(require,module,exports){
+},{"./_source/linked-list.js":7}],9:[function(require,module,exports){
 var SCEmitter = require('sc-emitter').SCEmitter;
 
 if (!Object.create) {
@@ -1798,9 +1671,9 @@ SCChannel.prototype.destroy = function () {
 
 module.exports.SCChannel = SCChannel;
 
-},{"./objectcreate":13,"sc-emitter":14}],13:[function(require,module,exports){
-arguments[4][6][0].apply(exports,arguments)
-},{"dup":6}],14:[function(require,module,exports){
+},{"./objectcreate":10,"sc-emitter":11}],10:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"dup":3}],11:[function(require,module,exports){
 var Emitter = require('component-emitter');
 
 if (!Object.create) {
@@ -1833,7 +1706,7 @@ SCEmitter.prototype.emit = function (event) {
 
 module.exports.SCEmitter = SCEmitter;
 
-},{"./objectcreate":16,"component-emitter":15}],15:[function(require,module,exports){
+},{"./objectcreate":13,"component-emitter":12}],12:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -1996,9 +1869,9 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],16:[function(require,module,exports){
-arguments[4][6][0].apply(exports,arguments)
-},{"dup":6}],17:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
+arguments[4][3][0].apply(exports,arguments)
+},{"dup":3}],14:[function(require,module,exports){
 (function (global){
 var base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -2087,7 +1960,7 @@ module.exports.stringify = function (object) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],18:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -2132,39 +2005,191 @@ function ws(uri, protocols, opts) {
 
 if (WebSocket) ws.prototype = WebSocket.prototype;
 
-},{}],19:[function(require,module,exports){
-module.exports={
-  "name": "socketcluster-client",
-  "description": "SocketCluster JavaScript client",
-  "version": "2.3.7",
-  "homepage": "http://socketcluster.io",
-  "contributors": [
-    {
-      "name": "Jonathan Gros-Dubois",
-      "email": "grosjona@yahoo.com.au"
-    }
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/SocketCluster/socketcluster-client.git"
-  },
-  "dependencies": {
-    "linked-list": "0.1.0",
-    "sc-channel": "1.0.x",
-    "sc-emitter": "1.0.x",
-    "sc-formatter": "1.0.x",
-    "ws": "0.7.2"
-  },
-  "readmeFilename": "README.md"
+},{}],16:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+'use strict';
+
+// If obj.hasOwnProperty has been overridden, then calling
+// obj.hasOwnProperty(prop) will break.
+// See: https://github.com/joyent/node/issues/1707
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-},{}]},{},[4])(4)
-});
+module.exports = function(qs, sep, eq, options) {
+  sep = sep || '&';
+  eq = eq || '=';
+  var obj = {};
 
+  if (typeof qs !== 'string' || qs.length === 0) {
+    return obj;
+  }
+
+  var regexp = /\+/g;
+  qs = qs.split(sep);
+
+  var maxKeys = 1000;
+  if (options && typeof options.maxKeys === 'number') {
+    maxKeys = options.maxKeys;
+  }
+
+  var len = qs.length;
+  // maxKeys <= 0 means that we should not limit keys count
+  if (maxKeys > 0 && len > maxKeys) {
+    len = maxKeys;
+  }
+
+  for (var i = 0; i < len; ++i) {
+    var x = qs[i].replace(regexp, '%20'),
+        idx = x.indexOf(eq),
+        kstr, vstr, k, v;
+
+    if (idx >= 0) {
+      kstr = x.substr(0, idx);
+      vstr = x.substr(idx + 1);
+    } else {
+      kstr = x;
+      vstr = '';
+    }
+
+    k = decodeURIComponent(kstr);
+    v = decodeURIComponent(vstr);
+
+    if (!hasOwnProperty(obj, k)) {
+      obj[k] = v;
+    } else if (isArray(obj[k])) {
+      obj[k].push(v);
+    } else {
+      obj[k] = [obj[k], v];
+    }
+  }
+
+  return obj;
+};
+
+var isArray = Array.isArray || function (xs) {
+  return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+},{}],17:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+'use strict';
+
+var stringifyPrimitive = function(v) {
+  switch (typeof v) {
+    case 'string':
+      return v;
+
+    case 'boolean':
+      return v ? 'true' : 'false';
+
+    case 'number':
+      return isFinite(v) ? v : '';
+
+    default:
+      return '';
+  }
+};
+
+module.exports = function(obj, sep, eq, name) {
+  sep = sep || '&';
+  eq = eq || '=';
+  if (obj === null) {
+    obj = undefined;
+  }
+
+  if (typeof obj === 'object') {
+    return map(objectKeys(obj), function(k) {
+      var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
+      if (isArray(obj[k])) {
+        return map(obj[k], function(v) {
+          return ks + encodeURIComponent(stringifyPrimitive(v));
+        }).join(sep);
+      } else {
+        return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
+      }
+    }).join(sep);
+
+  }
+
+  if (!name) return '';
+  return encodeURIComponent(stringifyPrimitive(name)) + eq +
+         encodeURIComponent(stringifyPrimitive(obj));
+};
+
+var isArray = Array.isArray || function (xs) {
+  return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+function map (xs, f) {
+  if (xs.map) return xs.map(f);
+  var res = [];
+  for (var i = 0; i < xs.length; i++) {
+    res.push(f(xs[i], i));
+  }
+  return res;
+}
+
+var objectKeys = Object.keys || function (obj) {
+  var res = [];
+  for (var key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
+  }
+  return res;
+};
+
+},{}],18:[function(require,module,exports){
+'use strict';
+
+exports.decode = exports.parse = require('./decode');
+exports.encode = exports.stringify = require('./encode');
+
+},{"./decode":16,"./encode":17}]},{},[1])(1)
+});
 /**
  * AngularJS SocketCluster Interface
  * @author Ryan Page <ryanpager@gmail.com>
- * @version v1.1.8
+ * @version v1.1.9
  * @see https://github.com/ryanpager/angularjs-socket-cluster#readme
  * @license MIT
  */

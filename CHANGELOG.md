@@ -1,5 +1,10 @@
+<a name="1.1.9"></a>
+### 1.1.9 (2015-11-02)
+
+* Upgrade socketcluster-client to latest patch version.
+
 <a name="1.1.8"></a>
-### 1.1.7 (2015-11-02)
+### 1.1.8 (2015-11-02)
 
 * Let events with $error objects pass through.
 
