@@ -30,6 +30,18 @@ class Socket
     hostname: '127.0.0.1'
     port: 8000
 
+  # @type {boolean}
+  # @description
+  # This variable is used to determine if a socket connect event was the result
+  #  of a connect() call or an auto reconnect.
+  isAutoReconnecting = no
+
+  # @type {boolean}
+  # @description
+  # This variable is used to determine if a socket disconnect event was the
+  #  result of a disconnect() call or a connectection drop.
+  intentionalDisconnect = no
+
   # @name $get
   # @type {function}
   # @description
@@ -71,8 +83,15 @@ class Socket
               $log.error("Socket :: Channel subscription error >> #{err}")
 
             instance.on 'disconnect', (err) ->
+              unless intentionalDisconnect
+                isAutoReconnecting = yes
+                $rootScope.$broadcast 'socket:connection:dropped'
+
               if debuggingEnabled
                 $log.info('Socket :: Disconnection successful')
+                $log.warn('Socket :: Connection dropped') unless intentionalDisconnect
+
+              intentionalDisconnect = no
 
             # Failed connection events
             instance.on 'connectAbort', (err) ->
@@ -82,8 +101,14 @@ class Socket
 
             # Successful connection events
             instance.on 'connect', ->
+              if isAutoReconnecting
+                isAutoReconnecting = no
+                $rootScope.$broadcast 'socket:connection:auto-reconnected'
+                $log.info('Socket :: Connection auto-reconnected') if debuggingEnabled
+
               if debuggingEnabled
                 $log.info('Socket :: Connection successful')
+
               resolve(true)
 
         # @name disconnect
@@ -102,6 +127,8 @@ class Socket
               err = 'Socket :: Error >> no socket connection established.'
               $log.error(err)
               return reject(err)
+
+            intentionalDisconnect = yes
 
             instance.disconnect()
             resolve(true)
@@ -155,6 +182,8 @@ class Socket
             instance.on 'single.publish', handleEvent
 
             instance.subscribe channel
+
+            $rootScope.$broadcast 'socket:channel:subscribed', channel
 
             resolve(true)
 

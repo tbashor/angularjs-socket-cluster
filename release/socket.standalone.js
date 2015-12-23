@@ -1,7 +1,7 @@
 /**
  * AngularJS SocketCluster Interface
  * @author Ryan Page <ryanpager@gmail.com>
- * @version v1.1.9
+ * @version v1.2.0
  * @see https://github.com/ryanpager/angularjs-socket-cluster#readme
  * @license MIT
  */
@@ -12,7 +12,7 @@
 var Socket;
 
 Socket = (function() {
-  var connectionOptions, debuggingEnabled, instance;
+  var connectionOptions, debuggingEnabled, instance, intentionalDisconnect, isAutoReconnecting;
 
   Socket.prototype.$inject = [];
 
@@ -28,6 +28,10 @@ Socket = (function() {
     hostname: '127.0.0.1',
     port: 8000
   };
+
+  isAutoReconnecting = false;
+
+  intentionalDisconnect = false;
 
   Socket.prototype.$get = [
     'socketCluster', '$q', '$rootScope', '$log', '$timeout', function(socketCluster, $q, $rootScope, $log, $timeout) {
@@ -53,9 +57,17 @@ Socket = (function() {
               return $log.error("Socket :: Channel subscription error >> " + err);
             });
             instance.on('disconnect', function(err) {
-              if (debuggingEnabled) {
-                return $log.info('Socket :: Disconnection successful');
+              if (!intentionalDisconnect) {
+                isAutoReconnecting = true;
+                $rootScope.$broadcast('socket:connection:dropped');
               }
+              if (debuggingEnabled) {
+                $log.info('Socket :: Disconnection successful');
+                if (!intentionalDisconnect) {
+                  $log.warn('Socket :: Connection dropped');
+                }
+              }
+              return intentionalDisconnect = false;
             });
             instance.on('connectAbort', function(err) {
               err = "Socket :: Connection aborted >> " + err;
@@ -63,6 +75,13 @@ Socket = (function() {
               return reject(err);
             });
             return instance.on('connect', function() {
+              if (isAutoReconnecting) {
+                isAutoReconnecting = false;
+                $rootScope.$broadcast('socket:connection:auto-reconnected');
+                if (debuggingEnabled) {
+                  $log.info('Socket :: Connection auto-reconnected');
+                }
+              }
               if (debuggingEnabled) {
                 $log.info('Socket :: Connection successful');
               }
@@ -81,6 +100,7 @@ Socket = (function() {
               $log.error(err);
               return reject(err);
             }
+            intentionalDisconnect = true;
             instance.disconnect();
             return resolve(true);
           });
@@ -123,6 +143,7 @@ Socket = (function() {
             instance.watch(channel, handleEvent);
             instance.on('single.publish', handleEvent);
             instance.subscribe(channel);
+            $rootScope.$broadcast('socket:channel:subscribed', channel);
             return resolve(true);
           });
         },
