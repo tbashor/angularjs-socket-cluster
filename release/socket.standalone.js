@@ -1,7 +1,7 @@
 /**
  * AngularJS SocketCluster Interface
  * @author Ryan Page <ryanpager@gmail.com>
- * @version v1.2.0
+ * @version v1.3.0
  * @see https://github.com/ryanpager/angularjs-socket-cluster#readme
  * @license MIT
  */
