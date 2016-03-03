@@ -76,7 +76,7 @@ class Socket
 
             # Generic events to listen for
             instance.on 'error', (err) ->
-              return if err is 'Action was silently blocked by publishIn middleware'
+              return if err?.name is 'SilentMiddlewareBlockedError'
               $log.error("Socket :: Error >> #{err}")
 
             instance.on 'subscribeFail', (err) ->
@@ -246,7 +246,7 @@ class Socket
               $log.info("Socket :: Publish to channel #{channel} >>", eventData)
 
             instance.publish channel, eventData, (err) ->
-              if err? and err isnt 'Action was silently blocked by publishIn middleware'
+              if err?.name? and err.name isnt 'SilentMiddlewareBlockedError'
                 reject(err)
               else
                 resolve(true)
