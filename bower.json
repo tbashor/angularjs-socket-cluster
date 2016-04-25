@@ -21,6 +21,6 @@
     "tests"
   ],
   "dependencies": {
-    "socketcluster-client": "^4.3.6"
+    "socketcluster-client": "^4.3.14"
   }
 }
