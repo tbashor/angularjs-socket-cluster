@@ -5,7 +5,7 @@
  * @see https://github.com/ryanpager/angularjs-socket-cluster#readme
  * @license MIT
  */
-(function() { 'use strict'; 
+(function() { 'use strict';
 /*
 >> Class Declaration
  */
@@ -105,6 +105,46 @@ Socket = (function() {
             return resolve(true);
           });
         },
+        on: function(eventName) {
+          if (eventName == null) {
+            eventName = null;
+          }
+          return $q(function(resolve, reject) {
+            var err, handleEvent;
+            if (eventName == null) {
+              err = 'Socket :: Error >> no socket event specified.';
+              $log.error(err);
+              return reject(err);
+            }
+            if (instance == null) {
+              err = 'Socket :: Error >> no socket connection established.';
+              $log.error(err);
+              return reject(err);
+            }
+            if (debuggingEnabled) {
+              $log.info("Socket :: Listen for event " + eventName);
+            }
+            handleEvent = function(eventData) {
+              if (eventData.$error != null) {
+                if (debuggingEnabled) {
+                  $log.error('Socket :: Event error >>', eventData);
+                }
+              }
+              if (debuggingEnabled) {
+                $log.info('Socket :: Event received >>', eventData);
+              }
+              return $rootScope.$apply(function() {
+                if (debuggingEnabled) {
+                  $log.info("Socket :: Rebroadcast event >> " + eventData.$event);
+                }
+                return $rootScope.$broadcast("socket:" + eventData.$event, eventData);
+              });
+            };
+            instance.on(eventName, handleEvent);
+            $rootScope.$broadcast('socket:event:subscribed', eventName);
+            return resolve(true);
+          });
+        },
         subscribe: function(channel) {
           if (channel == null) {
             channel = null;
@@ -147,6 +187,29 @@ Socket = (function() {
             return resolve(true);
           });
         },
+        off: function(eventName){
+          if (eventName == null) {
+            eventName = null;
+          }
+          return $q(function(resolve, reject) {
+            var err;
+            if (eventName == null) {
+              err = 'Socket :: Error >> no socket event specified.';
+              $log.error(err);
+              return reject(err);
+            }
+            if (instance == null) {
+              err = 'Socket :: Error >> no socket connection established.';
+              $log.error(err);
+              return reject(err);
+            }
+            if (debuggingEnabled) {
+              $log.info("Socket :: Unsubscribe to event " + eventName);
+            }
+            instance.off(eventName);
+            return resolve(true);
+          });
+        },
         unsubscribe: function(channel) {
           if (channel == null) {
             channel = null;
@@ -169,6 +232,37 @@ Socket = (function() {
             instance.unsubscribe(channel);
             instance.unwatch(channel);
             return resolve(true);
+          });
+        },
+        emit: function(eventName, eventData) {
+          if (eventName == null) {
+            eventName = null;
+          }
+          if (eventData == null) {
+            eventData = {};
+          }
+          return $q(function(resolve, reject) {
+            var err;
+            if (eventName == null) {
+              err = 'Socket :: Error >> no socket event specified.';
+              $log.error(err);
+              return reject(err);
+            }
+            if (instance == null) {
+              err = 'Socket :: Error >> no socket connection established.';
+              $log.error(err);
+              return reject(err);
+            }
+            if (debuggingEnabled) {
+              $log.info("Socket :: Publish event " + eventName + " >>", eventData);
+            }
+            return instance.emit(eventName, eventData, function(err) {
+              if (((err != null ? err.name : void 0) != null) && err.name !== 'SilentMiddlewareBlockedError') {
+                return reject(err);
+              } else {
+                return resolve(true);
+              }
+            });
           });
         },
         publish: function(channel, eventData) {
